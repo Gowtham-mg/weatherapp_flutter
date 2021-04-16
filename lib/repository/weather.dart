@@ -21,16 +21,15 @@ class WeatherRepository {
   final WeatherDB weatherDB;
   final Connectivity connectivity;
   String _networkStatus1 = '';
-  bool isActive = true;
+  bool isActive;
 
   WeatherRepository(this.weatherDB, this.connectivity);
 
-  void checkConnectivity() async {
-    // ConnectivityResult connectivityResult =
-    //     await connectivity.checkConnectivity();
-    // setConnectivityStatus(connectivityResult);
-    StreamSubscription<ConnectivityResult> subscription =
-        connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+  Future<void> checkConnectivity() async {
+    ConnectivityResult connectivityResult =
+        await connectivity.checkConnectivity();
+    setConnectivityStatus(connectivityResult);
+    connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
       var conn = getConnectionValue(result);
       setConnectivityStatus(result);
       _networkStatus1 = 'Check $conn Connection:: ';
@@ -68,7 +67,7 @@ class WeatherRepository {
           decodeForecastWeatherResponse(forecastWeatherNetworkResponse);
       if (forecastWeatherResponse.isSuccess) {
         await weatherDB
-            .storeForecastWeatherByCityName(forecastWeatherResponse.data);
+            .storeForecastWeatherByLocation(forecastWeatherResponse.data);
       }
       return forecastWeatherResponse;
     } else {

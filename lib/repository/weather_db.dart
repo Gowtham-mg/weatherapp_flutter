@@ -1,6 +1,5 @@
 import 'package:clima/app_response.dart';
 import 'package:clima/models/forecast_weather.dart';
-import 'package:clima/repository/weather.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -25,11 +24,16 @@ class WeatherDB {
 
   Future<void> openDB() async {
     String path = await getPath();
-    db = await openDatabase(path);
-    await db.execute(
-        'CREATE TABLE IF NOT EXISTS $currentWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature REAL, condition INTEGER, time TEXT, weatherLevel TEXT)');
-    await db.execute(
-        'CREATE TABLE IF NOT EXISTS $forecastWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature TEXT, condition TEXT, time TEXT, weatherLevel TEXT)');
+
+    if (await databaseExists(path)) {
+      db = await openDatabase(path);
+    } else {
+      db = await openDatabase(path);
+      await db.execute(
+          'CREATE TABLE IF NOT EXISTS $currentWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature REAL, condition INTEGER, time TEXT, weatherLevel TEXT)');
+      await db.execute(
+          'CREATE TABLE IF NOT EXISTS $forecastWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature TEXT, condition TEXT, time TEXT, weatherLevel TEXT)');
+    }
   }
 
   //
@@ -38,7 +42,7 @@ class WeatherDB {
 
   Future<void> storeCurrentWeatherByCityName(CurrentWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
-      "$currentWeatherTable",
+      currentWeatherTable,
       where: 'city = ?',
       whereArgs: [weather.city],
       columns: [
@@ -52,15 +56,15 @@ class WeatherDB {
       ],
       limit: 1,
     );
-    if (data.length == 0) {
+    if (data.isEmpty) {
       await db.insert(
-        "$currentWeatherTable",
+        currentWeatherTable,
         weather.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } else {
       await db.update(
-        "$currentWeatherTable",
+        currentWeatherTable,
         weather.toMap(),
         where: "city = ?",
         whereArgs: [weather.city],
@@ -70,7 +74,7 @@ class WeatherDB {
 
   Future<void> storeCurrentWeatherByLocation(CurrentWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
-      "$currentWeatherTable",
+      currentWeatherTable,
       where: 'latitude = ? and longitude = ?',
       whereArgs: [weather.latitude, weather.longitude],
       columns: [
@@ -86,9 +90,9 @@ class WeatherDB {
     );
     debugPrint("storeCurrentWeatherByLocation $data");
     debugPrint("storeCurrentWeatherByLocation Data ${weather.toMap()}");
-    if (data.length == 0) {
+    if (data.isEmpty) {
       await db.insert(
-        "$currentWeatherTable",
+        currentWeatherTable,
         weather.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -96,7 +100,7 @@ class WeatherDB {
     } else {
       debugPrint("Updating");
       await db.update(
-        "$currentWeatherTable",
+        currentWeatherTable,
         weather.toMap(),
         where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
@@ -122,7 +126,7 @@ class WeatherDB {
       limit: 1,
     );
     debugPrint('getCurrentWeatherByCityName Offline $data');
-    if (data.length != 0) {
+    if (data.isNotEmpty) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
       return AppResponse.named(error: 'No data Avaialble');
@@ -150,16 +154,20 @@ class WeatherDB {
       limit: 1,
     );
     debugPrint('getCurrentWeatherByLocation Offline $data');
-    if (data.length != 0) {
+    if (data.isNotEmpty) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
       return AppResponse.named(error: 'No data Avaialble');
     }
   }
 
+  //
+  // FORECAST Weather
+  //
+
   Future<void> storeForecastWeatherByCityName(ForecastWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
-      "$forecastWeatherTable",
+      forecastWeatherTable,
       where: 'city = ?',
       whereArgs: [weather.city],
       columns: [
@@ -172,15 +180,17 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    if (data.length == 0) {
+    debugPrint("storeForecastWeatherByCityName $data");
+    debugPrint("storeForecastWeatherByCityName Map ${weather.toMap()}");
+    if (data.isEmpty) {
       await db.insert(
-        "$forecastWeatherTable",
+        forecastWeatherTable,
         weather.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } else {
       await db.update(
-        "$forecastWeatherTable",
+        forecastWeatherTable,
         weather.toMap(),
         where: "city = ?",
         whereArgs: [weather.city],
@@ -188,13 +198,9 @@ class WeatherDB {
     }
   }
 
-  //
-  // FORECAST Weather
-  //
-
   Future<void> storeForecastWeatherByLocation(ForecastWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
-      "$forecastWeatherTable",
+      forecastWeatherTable,
       where: 'latitude = ? and longitude = ?',
       whereArgs: [weather.latitude, weather.longitude],
       columns: [
@@ -207,15 +213,18 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    if (data.length == 0) {
+    debugPrint("storeForecastWeatherByLocation $data");
+    debugPrint("storeForecastWeatherByLocation Map ${weather.toMap()}");
+
+    if (data.isEmpty) {
       await db.insert(
-        "$forecastWeatherTable",
+        forecastWeatherTable,
         weather.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } else {
       await db.update(
-        "$forecastWeatherTable",
+        forecastWeatherTable,
         weather.toMap(),
         where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
@@ -239,7 +248,10 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    if (data.length != 0) {
+    debugPrint("getForecastWeatherByCityName $data");
+    debugPrint("getForecastWeatherByLocation CityNAme $cityName");
+
+    if (data.isNotEmpty) {
       return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
     } else {
       return AppResponse.named(error: 'No data Avaialble');
@@ -266,7 +278,10 @@ class WeatherDB {
       ],
     );
     debugPrint("getForecastWeatherByLocation $data");
-    if (data.length != 0) {
+    debugPrint(
+        "getForecastWeatherByLocation Location ${position.latitude} ${position.longitude}");
+
+    if (data.isNotEmpty) {
       return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
     } else {
       return AppResponse.named(error: 'No data Avaialble');

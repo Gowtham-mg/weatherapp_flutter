@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final WeatherDB weatherDB = WeatherDB();
@@ -17,7 +18,7 @@ Future<void> main() async {
     weatherDB,
     connectivity,
   );
-  weatherRepository.checkConnectivity();
+  await weatherRepository.checkConnectivity();
   runApp(MyApp(weatherRepository: weatherRepository));
 }
 

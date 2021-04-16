@@ -1,12 +1,12 @@
 import 'package:clima/bloc/current_weather.dart';
-import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:clima/widgets/current_weather_widget.dart';
 import 'package:clima/widgets/status_bar_color_changer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'search_city_screen.dart';
+import 'package:location/location.dart';
+import 'package:clima/screens/search_city_screen.dart';
 
 class CurrentLocationScreen extends StatefulWidget {
   @override
@@ -38,13 +38,6 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
         body: SafeArea(
           child: BlocBuilder<CurrentWeatherCubit, CurrentWeatherState>(
             builder: (BuildContext context, CurrentWeatherState state) {
-              // print(state.currentWeatherStatus);
-              // print(state.error);
-              // print(state.forecast?.toMap());
-              // print(state.forecastWeatherStatus);
-              // print(state.weather?.toMap());
-              // print(state.cityName);
-
               if (state.currentWeatherStatus == BlocStatus.Loading) {
                 return Center(
                   child: SpinKitDoubleBounce(
@@ -53,11 +46,30 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                   ),
                 );
               } else if (state.currentWeatherStatus == BlocStatus.Error) {
+                print("ERROR");
+
+                print(
+                    'state.currentWeatherStatus ${state.currentWeatherStatus}');
+                print('state.error ${state.error}');
+                print('state.forecast?.toMap() ${state.forecast?.toMap()}');
+                print(
+                    'state.forecastWeatherStatus ${state.forecastWeatherStatus}');
+                print('state.weather?.toMap() ${state.weather?.toMap()}');
+                print('state.cityName ${state.cityName}');
                 return RefreshIndicator(
                   child: Center(child: Text(state.error)),
                   onRefresh: getCurrentLocation,
                 );
               } else if (state.currentWeatherStatus == BlocStatus.Success) {
+                print("SUCCESS");
+                print(
+                    'state.currentWeatherStatus ${state.currentWeatherStatus}');
+                print('state.error ${state.error}');
+                print('state.forecast?.toMap() ${state.forecast?.toMap()}');
+                print(
+                    'state.forecastWeatherStatus ${state.forecastWeatherStatus}');
+                print('state.weather?.toMap() ${state.weather?.toMap()}');
+                print('state.cityName ${state.cityName}');
                 return ListView(
                   padding: EdgeInsets.symmetric(
                     horizontal: _width * 0.05,
@@ -107,6 +119,19 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                             size: 30.0,
                           ),
                         ),
+                        IconButton(
+                          icon: Icon(Icons.ac_unit),
+                          onPressed: () async {
+                                BlocProvider.of<CurrentWeatherCubit>(context)
+                                    .weatherRepository
+                                    .weatherDB
+                                    .getCurrentWeatherByLocation(
+                                        LocationData.fromMap({
+                                      'latitude': 11.0181371,
+                                      "longitude": 76.9862336
+                                    }));
+                          },
+                        )
                       ],
                     ),
                     CurrentWeatherWidget(
