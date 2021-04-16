@@ -16,48 +16,14 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       : super(CurrentWeatherState.named(
             currentWeatherStatus: BlocStatus.Initial));
 
-  void getWeatherByCityName(final String cityName) async {
-    emit(state.copyWith(
-      currentWeatherStatus: BlocStatus.Loading,
-      forecastWeatherStatus: BlocStatus.Loading,
-    ));
-    AppResponse<CurrentWeather> weatherResponse =
-        await weatherRepository.getCurrentWeatherByCityName(cityName);
-    if (weatherResponse.isError) {
-      emit(state.copyWith(
-        currentWeatherStatus: BlocStatus.Error,
-        error: weatherResponse.error,
-      ));
-    } else {
-      emit(state.copyWith(
-        currentWeatherStatus: BlocStatus.Success,
-        weather: weatherResponse.data,
-      ));
-    }
-
-    AppResponse<ForecastWeather> forecastResponse =
-        await weatherRepository.getForecastWeatherByCity(cityName);
-    if (weatherResponse.isError) {
-      emit(state.copyWith(
-        forecastWeatherStatus: BlocStatus.Error,
-        error: forecastResponse.error,
-      ));
-    } else {
-      emit(state.copyWith(
-        forecastWeatherStatus: BlocStatus.Success,
-        forecast: forecastResponse.data,
-      ));
-    }
-  }
-
   void getWeatherByCurrentLocation() async {
     emit(state.copyWith(
       currentWeatherStatus: BlocStatus.Loading,
       forecastWeatherStatus: BlocStatus.Loading,
     ));
-    // PermissionStatus hasPermission = await location.hasPermission();
     PermissionStatus status = await location.requestPermission();
-    if (status == PermissionStatus.granted) {
+    if (status == PermissionStatus.grantedLimited ||
+        status == PermissionStatus.granted) {
       LocationData position = await location.getLocation();
 
       AppResponse<CurrentWeather> weatherResponse =

@@ -2,23 +2,19 @@ import 'package:clima/bloc/current_weather.dart';
 import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:clima/repository/weather_db.dart';
+import 'package:clima/repository/weather_offline.dart';
 import 'package:clima/screens/current_location_screen.dart';
-import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final WeatherDB weatherDB = WeatherDB();
+  final WeatherOffline weatherOffline = WeatherOffline(weatherDB);
   await weatherDB.openDB();
-  final Connectivity connectivity = Connectivity();
-  final WeatherRepository weatherRepository = WeatherRepository(
-    weatherDB,
-    connectivity,
-  );
-  await weatherRepository.checkConnectivity();
+  final WeatherRepository weatherRepository =
+      WeatherRepository(weatherDB, weatherOffline);
   runApp(MyApp(weatherRepository: weatherRepository));
 }
 

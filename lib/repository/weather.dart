@@ -5,17 +5,15 @@ import 'package:clima/app_response.dart';
 import 'package:clima/models/current_weather.dart';
 import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather_db.dart';
+import 'package:clima/repository/weather_offline.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
-import 'package:connectivity/connectivity.dart';
 
 const String apiKey = '8a615e769eec04422a333dc69171f25b';
 const String currentWeather = 'https://api.openweathermap.org/data/2.5/weather';
 const String forecastWeather =
     'https://api.openweathermap.org/data/2.5/forecast';
-const String noRecentDataAvaiable =
-    "No data available, We suggest you to connect to network";
 const List<String> months = [
   "January",
   "February",
@@ -31,151 +29,66 @@ const List<String> months = [
   "December"
 ];
 
+const Map<String, String> connectivityMsg = {
+  "message": "Please check your Internet connection"
+};
+
 class WeatherRepository {
   final WeatherDB weatherDB;
-  final Connectivity connectivity;
-  String _networkStatus1 = '';
-  bool isActive = false;
-
-  WeatherRepository(this.weatherDB, this.connectivity);
-
-  void checkConnectivity() async {
-    ConnectivityResult connectivityResult =
-        await connectivity.checkConnectivity();
-    setConnectivityStatus(connectivityResult);
-    connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-      var conn = getConnectionValue(result);
-      setConnectivityStatus(result);
-      _networkStatus1 = 'Check $conn Connection:: ';
-    });
-  }
-
-  void setConnectivityStatus(ConnectivityResult result) {
-    if (result == ConnectivityResult.mobile ||
-        result == ConnectivityResult.wifi) {
-      isActive = true;
-    } else {
-      isActive = false;
-    }
-  }
-
-  String getConnectionValue(var connectivityResult) {
-    switch (connectivityResult) {
-      case ConnectivityResult.mobile:
-        return 'Mobile';
-      case ConnectivityResult.wifi:
-        return 'Wi-Fi';
-      case ConnectivityResult.none:
-        return 'Internet';
-      default:
-        return 'Internet';
-    }
-  }
+  final WeatherOffline weatherOffline;
+  WeatherRepository(this.weatherDB, this.weatherOffline);
 
   Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
       LocationData position) async {
-    if (isActive) {
-      var forecastWeatherNetworkResponse = await http.get(
-          '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
+    try {
+      debugPrint("getForecastWeatherByLocation");
+      http.Response forecastWeatherNetworkResponse = await http
+          .get(
+              '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey')
+          .timeout(
+            Duration(seconds: 5),
+            onTimeout: onTimeOut,
+          );
       AppResponse<ForecastWeather> forecastWeatherResponse =
           decodeForecastWeatherResponse(forecastWeatherNetworkResponse);
+      debugPrint(
+          "POSITION forecastWeatherResponse.isSuccess ${forecastWeatherResponse.isSuccess}");
       if (forecastWeatherResponse.isSuccess) {
         await weatherDB
             .storeForecastWeatherByLocation(forecastWeatherResponse.data);
       }
       return forecastWeatherResponse;
-    } else {
-      AppResponse<ForecastWeather> forecastWeatherResponse =
-          await weatherDB.getForecastWeatherByLocation(position);
-      return getForecastWeatherOfflineData(forecastWeatherResponse);
+    } catch (e) {
+      return weatherOffline.getForecastWeatherByLocation(position);
     }
   }
 
   Future<AppResponse<ForecastWeather>> getForecastWeatherByCity(
       final String cityName) async {
-    if (isActive) {
-      var forecastWeatherNetworkResponse =
-          await http.get('$forecastWeather?q=$cityName&appid=$apiKey');
+    try {
+      http.Response forecastWeatherNetworkResponse = await http
+          .get('$forecastWeather?q=$cityName&appid=$apiKey')
+          .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
+      // if (forecastWeatherNetworkResponse.statusCode != 101) {
       AppResponse<ForecastWeather> forecastWeatherResponse =
           decodeForecastWeatherResponse(forecastWeatherNetworkResponse);
       if (forecastWeatherResponse.isSuccess) {
+        debugPrint('POSITION storing forecast weather from online');
         await weatherDB
             .storeForecastWeatherByCityName(forecastWeatherResponse.data);
       }
       return forecastWeatherResponse;
-    } else {
-      AppResponse<ForecastWeather> forecastWeatherResponse =
-          await weatherDB.getForecastWeatherByCityName(cityName);
-      return getForecastWeatherOfflineData(forecastWeatherResponse);
-    }
-  }
-
-  AppResponse<ForecastWeather> getForecastWeatherOfflineData(
-    AppResponse<ForecastWeather> forecastWeatherResponse,
-  ) {
-    if (forecastWeatherResponse.isSuccess) {
-      ForecastWeather data = forecastWeatherResponse.data;
-      int forecastIndex =
-          forecastWeatherResponse.data.time.indexWhere((element) {
-        final int forecastTimeDiffInSecond =
-            element.difference(DateTime.now()).inSeconds;
-        if (forecastTimeDiffInSecond < 10800 &&
-            forecastTimeDiffInSecond > -10800) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-      if (forecastIndex == -1) {
-        return AppResponse.named(error: noRecentDataAvaiable);
-      } else {
-        return AppResponse.named(
-          data: data.copyWith(
-            condition: data.condition.sublist(forecastIndex),
-            temperature: data.temperature.sublist(forecastIndex),
-            weatherLevel: data.weatherLevel.sublist(forecastIndex),
-            time: data.time.sublist(forecastIndex),
-          ),
-        );
-      }
-    } else {
-      return forecastWeatherResponse;
-    }
-  }
-
-  Future<AppResponse<CurrentWeather>> getCurrentWeatherOfflineData(
-      {String cityName,
-      LocationData position,
-      @required AppResponse<CurrentWeather> currentWeatherResp}) async {
-    if (currentWeatherResp.isSuccess) {
-      CurrentWeather currentWeather = currentWeatherResp.data;
-      int timediffInSeconds =
-          DateTime.now().difference(currentWeather.time).inSeconds;
-      final bool isValidWeatherAvailable =
-          (timediffInSeconds < 21600 && timediffInSeconds > -21600);
-      if (isValidWeatherAvailable) {
-        return currentWeatherResp;
-      } else {
-        AppResponse<ForecastWeather> forecastWeatherResponse;
-        if (position == null) {
-          forecastWeatherResponse =
-              await weatherDB.getForecastWeatherByCityName(cityName);
-        } else {
-          forecastWeatherResponse =
-              await weatherDB.getForecastWeatherByLocation(position);
-        }
-        return getCurrentWeatherFromForecastResponse(forecastWeatherResponse);
-      }
-    } else {
-      return currentWeatherResp;
+    } catch (e) {
+      return weatherOffline.getForecastWeatherByCity(cityName);
     }
   }
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByCityName(
       String cityName) async {
-    if (isActive) {
-      var response =
-          await http.get('$currentWeather?q=$cityName&appid=$apiKey');
+    try {
+      http.Response response = await http
+          .get('$currentWeather?q=$cityName&appid=$apiKey')
+          .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       AppResponse<CurrentWeather> currentWeatherResponse =
           decodeCurrentWeatherResponse(response);
       if (currentWeatherResponse.isSuccess) {
@@ -183,68 +96,31 @@ class WeatherRepository {
             .storeCurrentWeatherByCityName(currentWeatherResponse.data);
       }
       return currentWeatherResponse;
-    } else {
-      AppResponse<CurrentWeather> currentWeatherResp =
-          await weatherDB.getCurrentWeatherByCityName(cityName);
-      return getCurrentWeatherOfflineData(
-          cityName: cityName, currentWeatherResp: currentWeatherResp);
-    }
-  }
-
-  AppResponse<CurrentWeather> getCurrentWeatherFromForecastResponse(
-      final AppResponse<ForecastWeather> forecastWeatherResponse) {
-    if (forecastWeatherResponse.isSuccess) {
-      int forecastIndex =
-          forecastWeatherResponse.data.time.indexWhere((element) {
-        final int forecastTimeDiffInSecond =
-            element.difference(DateTime.now()).inSeconds;
-        if (forecastTimeDiffInSecond < 10800 &&
-            forecastTimeDiffInSecond > -10800) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-      if (forecastIndex == -1) {
-        return AppResponse.named(error: noRecentDataAvaiable);
-      } else {
-        return AppResponse.named(
-          data: CurrentWeather.named(
-            city: forecastWeatherResponse.data.city,
-            condition: forecastWeatherResponse.data.condition[forecastIndex],
-            latitude: forecastWeatherResponse.data.latitude,
-            longitude: forecastWeatherResponse.data.longitude,
-            temperature:
-                forecastWeatherResponse.data.temperature[forecastIndex],
-            time: forecastWeatherResponse.data.time[forecastIndex],
-            weatherLevel:
-                forecastWeatherResponse.data.weatherLevel[forecastIndex],
-          ),
-        );
-      }
-    } else {
-      return AppResponse.named(error: noRecentDataAvaiable);
+    } catch (e) {
+      return weatherOffline.getCurrentWeatherByCityName(cityName);
     }
   }
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       LocationData position) async {
-    print('${position.latitude} ${position.longitude}');
-    if (isActive) {
-      var response = await http.get(
-          '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
+    debugPrint('POSITION ${position.latitude} ${position.longitude}');
+    try {
+      http.Response response = await http
+          .get(
+              '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey')
+          .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       AppResponse<CurrentWeather> currentWeatherResponse =
           decodeCurrentWeatherResponse(response);
+      debugPrint(
+          "POSITION currentWeatherResponse.isSuccess ${currentWeatherResponse.isSuccess}");
       if (currentWeatherResponse.isSuccess) {
+        debugPrint('POSITION storing current weather from online');
         await weatherDB
             .storeCurrentWeatherByLocation(currentWeatherResponse.data);
       }
       return currentWeatherResponse;
-    } else {
-      AppResponse<CurrentWeather> currentWeatherResp =
-          await weatherDB.getCurrentWeatherByLocation(position);
-      return getCurrentWeatherOfflineData(
-          position: position, currentWeatherResp: currentWeatherResp);
+    } catch (e) {
+      return weatherOffline.getCurrentWeatherByLocation(position);
     }
   }
 
@@ -269,6 +145,10 @@ class WeatherRepository {
     } else {
       return AppResponse.named(error: decodedData['message'].toString());
     }
+  }
+
+  Future<http.Response> onTimeOut() async {
+    return http.Response(jsonEncode(connectivityMsg), 101);
   }
 
   static String getWeatherIcon(int condition) {

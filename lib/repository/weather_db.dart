@@ -68,6 +68,7 @@ class WeatherDB {
         weather.toMap(),
         where: "city = ?",
         whereArgs: [weather.city],
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
   }
@@ -104,6 +105,7 @@ class WeatherDB {
         weather.toMap(),
         where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
   }
@@ -194,6 +196,7 @@ class WeatherDB {
         weather.toMap(),
         where: "city = ?",
         whereArgs: [weather.city],
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
   }
@@ -228,6 +231,7 @@ class WeatherDB {
         weather.toMap(),
         where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
   }

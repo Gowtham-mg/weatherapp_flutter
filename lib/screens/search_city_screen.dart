@@ -15,7 +15,9 @@ class SearchCityScreen extends StatefulWidget {
 class _SearchCityScreenState extends State<SearchCityScreen> {
   bool showSuggestion = false;
   String cityName = '';
+  final TextEditingController cityController = TextEditingController();
   void search(String city) {
+    cityController.text = city;
     BlocProvider.of<SearchWeatherCubit>(context).getWeatherByCityName(city);
   }
 
@@ -56,6 +58,7 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
               Column(
                 children: <Widget>[
                   TextField(
+                    controller: cityController,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white10,
@@ -93,116 +96,116 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
                           });
                         }
                       },
-                      child: RefreshIndicator(
-                        onRefresh: () async {
-                          search(cityName);
-                        },
-                        child:
-                            BlocBuilder<SearchWeatherCubit, SearchWeatherState>(
-                          builder:
-                              (BuildContext context, SearchWeatherState state) {
-                            if (state.currentWeatherStatus ==
-                                BlocStatus.Loading) {
-                              return Center(child: CircularProgressIndicator());
-                            } else if (state.currentWeatherStatus ==
-                                BlocStatus.Success) {
-                              return ListView(
-                                children: [
-                                  CurrentWeatherWidget(
-                                    temperature:
-                                        '${state.weather.temperature}°C',
-                                    weatherIcon:
-                                        WeatherRepository.getWeatherIcon(
-                                            state.weather.condition),
-                                    weatherLevel: state.weather.weatherLevel,
-                                    tempFontSize: _width * 0.3,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        top: 30,
-                                        bottom: 15,
-                                        left: _width * 0.1),
-                                    child: Text(
-                                      'Forecasted data:',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 17,
-                                      ),
+                      child:
+                          BlocBuilder<SearchWeatherCubit, SearchWeatherState>(
+                        builder:
+                            (BuildContext context, SearchWeatherState state) {
+                          if (state.currentWeatherStatus ==
+                              BlocStatus.Loading) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (state.currentWeatherStatus ==
+                              BlocStatus.Success) {
+                            return ListView(
+                              children: [
+                                CurrentWeatherWidget(
+                                  temperature: '${state.weather.temperature}°C',
+                                  weatherIcon: WeatherRepository.getWeatherIcon(
+                                      state.weather.condition),
+                                  weatherLevel: state.weather.weatherLevel,
+                                  tempFontSize: _width * 0.3,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                      top: 30, bottom: 15, left: _width * 0.1),
+                                  child: Text(
+                                    'Forecasted data:',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 17,
                                     ),
                                   ),
-                                  if (state.forecastWeatherStatus ==
-                                      BlocStatus.Success)
-                                    GridView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      padding:
-                                          EdgeInsets.only(top: 20, bottom: 20),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 0,
-                                        crossAxisSpacing: 5,
-                                      ),
-                                      itemBuilder:
-                                          (BuildContext context, int index) {
-                                        return Column(
-                                          children: [
-                                            Text(
-                                              WeatherRepository.getTime(
-                                                  state.forecast.time[index]),
-                                              textAlign: TextAlign.center,
+                                ),
+                                if (state.forecastWeatherStatus ==
+                                    BlocStatus.Success)
+                                  GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    padding:
+                                        EdgeInsets.only(top: 20, bottom: 20),
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 0,
+                                      crossAxisSpacing: 5,
+                                    ),
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return Column(
+                                        children: [
+                                          Text(
+                                            WeatherRepository.getTime(
+                                                state.forecast.time[index]),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            WeatherRepository.getWeatherIcon(
+                                                state
+                                                    .forecast.condition[index]),
+                                            style: TextStyle(
+                                                fontSize: 30, height: 2),
+                                          ),
+                                          Text(
+                                            state.forecast.weatherLevel[index],
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              height: 1.25,
+                                              color: Colors.grey,
                                             ),
-                                            Text(
-                                              WeatherRepository.getWeatherIcon(
-                                                  state.forecast
-                                                      .condition[index]),
-                                              style: TextStyle(
-                                                  fontSize: 30, height: 2),
+                                          ),
+                                          Text(
+                                            '${state.forecast.temperature[index]}°',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              height: 1.5,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
                                             ),
-                                            Text(
-                                              state
-                                                  .forecast.weatherLevel[index],
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                height: 1.25,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                            Text(
-                                              '${state.forecast.temperature[index]}°',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                height: 1.5,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                      itemCount:
-                                          state.forecast?.temperature?.length ??
-                                              0,
-                                    )
-                                  else if (state.forecastWeatherStatus ==
-                                      BlocStatus.Loading)
-                                    Center(child: CircularProgressIndicator())
-                                  else if (state.forecastWeatherStatus ==
-                                      BlocStatus.Error)
-                                    Text(state.error)
-                                  else
-                                    Container()
-                                ],
-                              );
-                            } else if (state.currentWeatherStatus ==
-                                BlocStatus.Error) {
-                              return Center(child: Text(state.error));
-                            } else {
-                              return Container();
-                            }
-                          },
-                        ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                    itemCount:
+                                        state.forecast?.temperature?.length ??
+                                            0,
+                                  )
+                                else if (state.forecastWeatherStatus ==
+                                    BlocStatus.Loading)
+                                  Center(child: CircularProgressIndicator())
+                                else if (state.forecastWeatherStatus ==
+                                    BlocStatus.Error)
+                                  SearchErrorWidget(
+                                    error: state.error,
+                                    search: () {
+                                      search(cityName);
+                                    },
+                                  )
+                                else
+                                  Container()
+                              ],
+                            );
+                          } else if (state.currentWeatherStatus ==
+                              BlocStatus.Error) {
+                            return SearchErrorWidget(
+                              error: state.error,
+                              search: () {
+                                search(cityName);
+                              },
+                            );
+                          } else {
+                            return Container();
+                          }
+                        },
                       ),
                     ),
                   ),
@@ -284,6 +287,35 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class SearchErrorWidget extends StatelessWidget {
+  final Function search;
+  final String error;
+
+  const SearchErrorWidget(
+      {Key key, @required this.error, @required this.search})
+      : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          error,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+          ),
+        ),
+        IconButton(
+          onPressed: search,
+          icon: Icon(Icons.refresh),
+        )
+      ],
     );
   }
 }
