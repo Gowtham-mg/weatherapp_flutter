@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:location/location.dart';
-import 'search_city_screen.dart';
+import 'package:clima/screens/search_city_screen.dart';
 
 class CurrentLocationScreen extends StatefulWidget {
   @override
@@ -23,7 +23,7 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
     super.initState();
   }
 
-  Future<void> getCurrentLocation() async {
+  void getCurrentLocation() {
     BlocProvider.of<CurrentWeatherCubit>(context).getWeatherByCurrentLocation();
   }
 
@@ -39,13 +39,6 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
         body: SafeArea(
           child: BlocBuilder<CurrentWeatherCubit, CurrentWeatherState>(
             builder: (BuildContext context, CurrentWeatherState state) {
-              // print(state.currentWeatherStatus);
-              // print(state.error);
-              // print(state.forecast?.toMap());
-              // print(state.forecastWeatherStatus);
-              // print(state.weather?.toMap());
-              // print(state.cityName);
-
               if (state.currentWeatherStatus == BlocStatus.Loading) {
                 return Center(
                   child: SpinKitDoubleBounce(
@@ -92,10 +85,21 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                         fontSize: 17,
                       ),
                     )),
-                    onRefresh: getCurrentLocation,
+                    onRefresh: () async {
+                      getCurrentLocation();
+                    },
                   );
                 }
               } else if (state.currentWeatherStatus == BlocStatus.Success) {
+                // print("SUCCESS");
+                // print(
+                //     'state.currentWeatherStatus ${state.currentWeatherStatus}');
+                // print('state.error ${state.error}');
+                // print('state.forecast?.toMap() ${state.forecast?.toMap()}');
+                // print(
+                //     'state.forecastWeatherStatus ${state.forecastWeatherStatus}');
+                // print('state.weather?.toMap() ${state.weather?.toMap()}');
+                // print('state.cityName ${state.cityName}');
                 return ListView(
                   padding: EdgeInsets.symmetric(
                     horizontal: _width * 0.05,
@@ -145,6 +149,19 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                             size: 30.0,
                           ),
                         ),
+                        IconButton(
+                          icon: Icon(Icons.ac_unit),
+                          onPressed: () async {
+                            BlocProvider.of<CurrentWeatherCubit>(context)
+                                .weatherRepository
+                                .weatherDB
+                                .getForecastWeatherByLocation(
+                                    LocationData.fromMap({
+                                  'latitude': 11.0181371,
+                                  "longitude": 76.9862336
+                                }));
+                          },
+                        )
                       ],
                     ),
                     CurrentWeatherWidget(

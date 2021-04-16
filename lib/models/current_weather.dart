@@ -91,10 +91,6 @@ class CurrentWeather {
   factory CurrentWeather.fromJson(String source) =>
       CurrentWeather.fromMap(json.decode(source));
 
-  @override
-  String toString() {
-    return 'Weather(city: $city, latitude: $latitude, longitude: $longitude, temperature: $temperature)';
-  }
 
   @override
   bool operator ==(Object other) {
