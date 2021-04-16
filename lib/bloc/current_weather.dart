@@ -22,7 +22,7 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       forecastWeatherStatus: BlocStatus.Loading,
     ));
     AppResponse<CurrentWeather> weatherResponse =
-        await weatherRepository.getCityCurrentWeather(cityName);
+        await weatherRepository.getCurrentWeatherByCityName(cityName);
     if (weatherResponse.isError) {
       emit(state.copyWith(
         currentWeatherStatus: BlocStatus.Error,
@@ -55,12 +55,13 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       currentWeatherStatus: BlocStatus.Loading,
       forecastWeatherStatus: BlocStatus.Loading,
     ));
+    // PermissionStatus hasPermission = await location.hasPermission();
     PermissionStatus status = await location.requestPermission();
     if (status == PermissionStatus.granted) {
       LocationData position = await location.getLocation();
 
       AppResponse<CurrentWeather> weatherResponse =
-          await weatherRepository.getLocationWeather(position);
+          await weatherRepository.getCurrentWeatherByLocation(position);
       if (weatherResponse.isError) {
         emit(state.copyWith(
           currentWeatherStatus: BlocStatus.Error,
@@ -74,7 +75,7 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       }
 
       AppResponse<ForecastWeather> forecastResponse =
-          await weatherRepository.getLocationForecastWeather(position);
+          await weatherRepository.getForecastWeatherByLocation(position);
       if (weatherResponse.isError) {
         emit(state.copyWith(
           forecastWeatherStatus: BlocStatus.Error,

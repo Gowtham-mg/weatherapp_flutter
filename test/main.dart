@@ -18,7 +18,7 @@ void main() {
     await weatherDB.openDB();
     await weatherRepository.checkConnectivity();
     final AppResponse<CurrentWeather> currentWeather =
-        await weatherRepository.getCityCurrentWeather("Coimbatore");
+        await weatherRepository.getCurrentWeatherByCityName("Coimbatore");
     expect(currentWeather.isSuccess, true);
     expect(currentWeather.data.city, isNotNull);
     expect(currentWeather.data.condition, isNotNull);

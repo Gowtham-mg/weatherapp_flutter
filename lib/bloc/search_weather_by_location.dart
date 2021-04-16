@@ -19,7 +19,7 @@ class SearchWeatherCubit extends Cubit<SearchWeatherState> {
       forecastWeatherStatus: BlocStatus.Loading,
     ));
     AppResponse<CurrentWeather> weatherResponse =
-        await weatherRepository.getCityCurrentWeather(cityName);
+        await weatherRepository.getCurrentWeatherByCityName(cityName);
     if (weatherResponse.isError) {
       emit(state.copyWith(
         currentWeatherStatus: BlocStatus.Error,

@@ -91,15 +91,6 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                   );
                 }
               } else if (state.currentWeatherStatus == BlocStatus.Success) {
-                // print("SUCCESS");
-                // print(
-                //     'state.currentWeatherStatus ${state.currentWeatherStatus}');
-                // print('state.error ${state.error}');
-                // print('state.forecast?.toMap() ${state.forecast?.toMap()}');
-                // print(
-                //     'state.forecastWeatherStatus ${state.forecastWeatherStatus}');
-                // print('state.weather?.toMap() ${state.weather?.toMap()}');
-                // print('state.cityName ${state.cityName}');
                 return ListView(
                   padding: EdgeInsets.symmetric(
                     horizontal: _width * 0.05,

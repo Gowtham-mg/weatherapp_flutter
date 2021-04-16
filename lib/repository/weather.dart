@@ -16,6 +16,20 @@ const String forecastWeather =
     'https://api.openweathermap.org/data/2.5/forecast';
 const String noRecentDataAvaiable =
     "No data available, We suggest you to connect to network";
+const List<String> months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
 
 class WeatherRepository {
   final WeatherDB weatherDB;
@@ -26,14 +40,14 @@ class WeatherRepository {
   WeatherRepository(this.weatherDB, this.connectivity);
 
   void checkConnectivity() async {
-    // ConnectivityResult connectivityResult =
-    //     await connectivity.checkConnectivity();
-    // setConnectivityStatus(connectivityResult);
-    // connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-    //   var conn = getConnectionValue(result);
-    //   setConnectivityStatus(result);
-    //   _networkStatus1 = 'Check $conn Connection:: ';
-    // });
+    ConnectivityResult connectivityResult =
+        await connectivity.checkConnectivity();
+    setConnectivityStatus(connectivityResult);
+    connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      var conn = getConnectionValue(result);
+      setConnectivityStatus(result);
+      _networkStatus1 = 'Check $conn Connection:: ';
+    });
   }
 
   void setConnectivityStatus(ConnectivityResult result) {
@@ -58,7 +72,7 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<ForecastWeather>> getLocationForecastWeather(
+  Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
       LocationData position) async {
     if (isActive) {
       var forecastWeatherNetworkResponse = await http.get(
@@ -73,7 +87,7 @@ class WeatherRepository {
     } else {
       AppResponse<ForecastWeather> forecastWeatherResponse =
           await weatherDB.getForecastWeatherByLocation(position);
-      return getForecastWeatherOffline(forecastWeatherResponse);
+      return getForecastWeatherOfflineData(forecastWeatherResponse);
     }
   }
 
@@ -92,11 +106,11 @@ class WeatherRepository {
     } else {
       AppResponse<ForecastWeather> forecastWeatherResponse =
           await weatherDB.getForecastWeatherByCityName(cityName);
-      return getForecastWeatherOffline(forecastWeatherResponse);
+      return getForecastWeatherOfflineData(forecastWeatherResponse);
     }
   }
 
-  AppResponse<ForecastWeather> getForecastWeatherOffline(
+  AppResponse<ForecastWeather> getForecastWeatherOfflineData(
     AppResponse<ForecastWeather> forecastWeatherResponse,
   ) {
     if (forecastWeatherResponse.isSuccess) {
@@ -129,7 +143,7 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<CurrentWeather>> getCurrentWeatherOffline(
+  Future<AppResponse<CurrentWeather>> getCurrentWeatherOfflineData(
       {String cityName,
       LocationData position,
       @required AppResponse<CurrentWeather> currentWeatherResp}) async {
@@ -157,13 +171,13 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<CurrentWeather>> getCityCurrentWeather(
+  Future<AppResponse<CurrentWeather>> getCurrentWeatherByCityName(
       String cityName) async {
     if (isActive) {
       var response =
           await http.get('$currentWeather?q=$cityName&appid=$apiKey');
       AppResponse<CurrentWeather> currentWeatherResponse =
-          decodeWeatherResponse(response);
+          decodeCurrentWeatherResponse(response);
       if (currentWeatherResponse.isSuccess) {
         await weatherDB
             .storeCurrentWeatherByCityName(currentWeatherResponse.data);
@@ -172,7 +186,7 @@ class WeatherRepository {
     } else {
       AppResponse<CurrentWeather> currentWeatherResp =
           await weatherDB.getCurrentWeatherByCityName(cityName);
-      return getCurrentWeatherOffline(
+      return getCurrentWeatherOfflineData(
           cityName: cityName, currentWeatherResp: currentWeatherResp);
     }
   }
@@ -213,14 +227,14 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<CurrentWeather>> getLocationWeather(
+  Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       LocationData position) async {
     print('${position.latitude} ${position.longitude}');
     if (isActive) {
       var response = await http.get(
           '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
       AppResponse<CurrentWeather> currentWeatherResponse =
-          decodeWeatherResponse(response);
+          decodeCurrentWeatherResponse(response);
       if (currentWeatherResponse.isSuccess) {
         await weatherDB
             .storeCurrentWeatherByLocation(currentWeatherResponse.data);
@@ -229,12 +243,13 @@ class WeatherRepository {
     } else {
       AppResponse<CurrentWeather> currentWeatherResp =
           await weatherDB.getCurrentWeatherByLocation(position);
-      return getCurrentWeatherOffline(
+      return getCurrentWeatherOfflineData(
           position: position, currentWeatherResp: currentWeatherResp);
     }
   }
 
-  AppResponse<CurrentWeather> decodeWeatherResponse(http.Response response) {
+  AppResponse<CurrentWeather> decodeCurrentWeatherResponse(
+      http.Response response) {
     final decodedData = jsonDecode(response.body);
     if (response.statusCode == 200) {
       CurrentWeather weather =
@@ -303,19 +318,4 @@ class WeatherRepository {
       return val.toString();
     }
   }
-
-  static const List<String> months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ];
 }

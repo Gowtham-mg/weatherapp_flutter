@@ -4,6 +4,6 @@ class AppResponse<T> {
 
   AppResponse.named({this.data, this.error});
 
-  bool get isError => this.data == null;
+  bool get isError => this.error != null;
   bool get isSuccess => this.error == null;
 }
