@@ -1,13 +1,20 @@
 import 'package:clima/bloc/current_weather.dart';
 import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
+import 'package:clima/widgets/app_error_widgets.dart';
 import 'package:clima/widgets/current_weather_widget.dart';
 import 'package:clima/widgets/status_bar_color_changer.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:clima/constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SearchCityScreen extends StatefulWidget {
+  final Connectivity connectivity;
+
+  const SearchCityScreen({Key key, @required this.connectivity})
+      : super(key: key);
+
   @override
   _SearchCityScreenState createState() => _SearchCityScreenState();
 }
@@ -19,6 +26,20 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
   void search(String city) {
     cityController.text = city;
     BlocProvider.of<SearchWeatherCubit>(context).getWeatherByCityName(city);
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPersistentFrameCallback((timeStamp) {
+      widget.connectivity.onConnectivityChanged
+          .listen((ConnectivityResult result) {
+        if (result == ConnectivityResult.mobile ||
+            result == ConnectivityResult.wifi) {
+          BlocProvider.of<SearchWeatherCubit>(context).searchIfNeeded(cityName);
+        }
+      });
+    });
+    super.initState();
   }
 
   @override
@@ -108,7 +129,8 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
                             return ListView(
                               children: [
                                 CurrentWeatherWidget(
-                                  temperature: '${state.weather.temperature}°C',
+                                  temperature:
+                                      '${WeatherRepository.convertToCelsius(state.weather.temperature)}°C',
                                   weatherIcon: WeatherRepository.getWeatherIcon(
                                       state.weather.condition),
                                   weatherLevel: state.weather.weatherLevel,
@@ -164,7 +186,7 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
                                             ),
                                           ),
                                           Text(
-                                            '${state.forecast.temperature[index]}°',
+                                            '${WeatherRepository.convertToCelsius(state.forecast.temperature[index])}°C',
                                             style: TextStyle(
                                               fontSize: 16,
                                               height: 1.5,
@@ -184,9 +206,9 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
                                   Center(child: CircularProgressIndicator())
                                 else if (state.forecastWeatherStatus ==
                                     BlocStatus.Error)
-                                  SearchErrorWidget(
+                                  AppErrorWidget(
                                     error: state.error,
-                                    search: () {
+                                    onRetry: () {
                                       search(cityName);
                                     },
                                   )
@@ -196,9 +218,9 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
                             );
                           } else if (state.currentWeatherStatus ==
                               BlocStatus.Error) {
-                            return SearchErrorWidget(
+                            return AppErrorWidget(
                               error: state.error,
-                              search: () {
+                              onRetry: () {
                                 search(cityName);
                               },
                             );
@@ -287,35 +309,6 @@ class _SearchCityScreenState extends State<SearchCityScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class SearchErrorWidget extends StatelessWidget {
-  final Function search;
-  final String error;
-
-  const SearchErrorWidget(
-      {Key key, @required this.error, @required this.search})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          error,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 17,
-          ),
-        ),
-        IconButton(
-          onPressed: search,
-          icon: Icon(Icons.refresh),
-        )
-      ],
     );
   }
 }

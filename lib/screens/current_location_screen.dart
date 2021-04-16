@@ -1,7 +1,9 @@
 import 'package:clima/bloc/current_weather.dart';
 import 'package:clima/repository/weather.dart';
+import 'package:clima/widgets/app_error_widgets.dart';
 import 'package:clima/widgets/current_weather_widget.dart';
 import 'package:clima/widgets/status_bar_color_changer.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -15,10 +17,18 @@ class CurrentLocationScreen extends StatefulWidget {
 
 class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
   final Location location = Location();
+  final Connectivity connectivity = Connectivity();
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       getCurrentLocation();
+      connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+        if (result == ConnectivityResult.mobile ||
+            result == ConnectivityResult.wifi) {
+          BlocProvider.of<CurrentWeatherCubit>(context).getWeatherIfNeeded();
+        }
+      });
     });
     super.initState();
   }
@@ -80,13 +90,11 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                     ));
                   } else {
                     return Center(
-                      child: Text(
-                        state.error,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
+                      child: AppErrorWidget(
+                        error: state.error,
+                        onRetry: () {
+                          getCurrentLocation();
+                        },
                       ),
                     );
                   }
@@ -130,7 +138,9 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) {
-                                    return SearchCityScreen();
+                                    return SearchCityScreen(
+                                      connectivity: connectivity,
+                                    );
                                   },
                                 ),
                               );
@@ -143,7 +153,8 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                         ],
                       ),
                       CurrentWeatherWidget(
-                        temperature: '${state.weather.temperature}°C',
+                        temperature:
+                            '${WeatherRepository.convertToCelsius(state.weather.temperature)}°C',
                         weatherIcon: WeatherRepository.getWeatherIcon(
                             state.weather.condition),
                         weatherLevel: state.weather.weatherLevel,
@@ -162,6 +173,7 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                       ),
                       SizedBox(
                         height: 160,
+                        width: _width,
                         child: state.forecastWeatherStatus == BlocStatus.Loading
                             ? Center(child: CircularProgressIndicator())
                             : state.forecastWeatherStatus == BlocStatus.Success
@@ -199,7 +211,7 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                                             ),
                                           ),
                                           Text(
-                                            '${state.forecast.temperature[index]}°',
+                                            '${WeatherRepository.convertToCelsius(state.forecast.temperature[index])}°C',
                                             style: TextStyle(
                                               fontSize: 16,
                                               height: 1.5,
@@ -213,7 +225,12 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                                   )
                                 : state.forecastWeatherStatus ==
                                         BlocStatus.Error
-                                    ? Text(state.error)
+                                    ? AppErrorWidget(
+                                        error: state.error,
+                                        onRetry: () {
+                                          getCurrentLocation();
+                                        },
+                                      )
                                     : Container(),
                       )
                     ],

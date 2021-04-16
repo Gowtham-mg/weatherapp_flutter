@@ -61,6 +61,12 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       ));
     }
   }
+
+  void getWeatherIfNeeded() {
+    if (state.error != null) {
+      getWeatherByCurrentLocation();
+    }
+  }
 }
 
 class CurrentWeatherState extends Equatable {

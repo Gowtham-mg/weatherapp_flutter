@@ -47,6 +47,12 @@ class SearchWeatherCubit extends Cubit<SearchWeatherState> {
     }
   }
 
+  void searchIfNeeded(final String cityName) {
+    if (state.error != null) {
+      getWeatherByCityName(cityName);
+    }
+  }
+
   void reset() {
     emit(SearchWeatherState.named(
       forecastWeatherStatus: BlocStatus.Initial,

@@ -198,4 +198,8 @@ class WeatherRepository {
       return val.toString();
     }
   }
+
+  static double convertToCelsius(double temperatureInKelvin) {
+    return temperatureInKelvin - 273.15;
+  }
 }
