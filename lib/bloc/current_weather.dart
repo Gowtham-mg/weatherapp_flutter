@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:location/location.dart';
 
+const String enableLocation = "Enable location permissions to continue";
+
 class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
   final WeatherRepository weatherRepository;
   final Location location;
@@ -53,33 +55,42 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       currentWeatherStatus: BlocStatus.Loading,
       forecastWeatherStatus: BlocStatus.Loading,
     ));
-    LocationData position = await location.getLocation();
+    PermissionStatus status = await location.requestPermission();
+    if (status == PermissionStatus.granted) {
+      LocationData position = await location.getLocation();
 
-    AppResponse<CurrentWeather> weatherResponse =
-        await weatherRepository.getLocationWeather(position);
-    if (weatherResponse.isError) {
-      emit(state.copyWith(
+      AppResponse<CurrentWeather> weatherResponse =
+          await weatherRepository.getLocationWeather(position);
+      if (weatherResponse.isError) {
+        emit(state.copyWith(
+          currentWeatherStatus: BlocStatus.Error,
+          error: weatherResponse.error,
+        ));
+      } else {
+        emit(state.copyWith(
+          currentWeatherStatus: BlocStatus.Success,
+          weather: weatherResponse.data,
+        ));
+      }
+
+      AppResponse<ForecastWeather> forecastResponse =
+          await weatherRepository.getLocationForecastWeather(position);
+      if (weatherResponse.isError) {
+        emit(state.copyWith(
+          forecastWeatherStatus: BlocStatus.Error,
+          error: forecastResponse.error,
+        ));
+      } else {
+        emit(state.copyWith(
+          forecastWeatherStatus: BlocStatus.Success,
+          forecast: forecastResponse.data,
+        ));
+      }
+    } else {
+      emit(CurrentWeatherState.named(
         currentWeatherStatus: BlocStatus.Error,
-        error: weatherResponse.error,
-      ));
-    } else {
-      emit(state.copyWith(
-        currentWeatherStatus: BlocStatus.Success,
-        weather: weatherResponse.data,
-      ));
-    }
-
-    AppResponse<ForecastWeather> forecastResponse =
-        await weatherRepository.getLocationForecastWeather(position);
-    if (weatherResponse.isError) {
-      emit(state.copyWith(
-        forecastWeatherStatus: BlocStatus.Error,
-        error: forecastResponse.error,
-      ));
-    } else {
-      emit(state.copyWith(
-        forecastWeatherStatus: BlocStatus.Success,
-        forecast: forecastResponse.data,
+        error: enableLocation,
+        forecastWeatherStatus: BlocStatus.Initial,
       ));
     }
   }

@@ -26,9 +26,9 @@ class WeatherRepository {
   WeatherRepository(this.weatherDB, this.connectivity);
 
   void checkConnectivity() async {
-    // ConnectivityResult connectivityResult =
-    //     await connectivity.checkConnectivity();
-    // setConnectivityStatus(connectivityResult);
+    ConnectivityResult connectivityResult =
+        await connectivity.checkConnectivity();
+    setConnectivityStatus(connectivityResult);
     StreamSubscription<ConnectivityResult> subscription =
         connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
       var conn = getConnectionValue(result);

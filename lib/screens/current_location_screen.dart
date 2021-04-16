@@ -1,11 +1,11 @@
 import 'package:clima/bloc/current_weather.dart';
-import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:clima/widgets/current_weather_widget.dart';
 import 'package:clima/widgets/status_bar_color_changer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:location/location.dart';
 import 'search_city_screen.dart';
 
 class CurrentLocationScreen extends StatefulWidget {
@@ -14,6 +14,7 @@ class CurrentLocationScreen extends StatefulWidget {
 }
 
 class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
+  final Location location = Location();
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -53,10 +54,47 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                   ),
                 );
               } else if (state.currentWeatherStatus == BlocStatus.Error) {
-                return RefreshIndicator(
-                  child: Center(child: Text(state.error)),
-                  onRefresh: getCurrentLocation,
-                );
+                if (state.error == enableLocation) {
+                  return Center(
+                      child: Row(
+                    children: [
+                      Text(
+                        state.error,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          getCurrentLocation();
+                        },
+                        child: Text(
+                          "Allow",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ));
+                } else {
+                  return RefreshIndicator(
+                    child: Center(
+                        child: Text(
+                      state.error,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                      ),
+                    )),
+                    onRefresh: getCurrentLocation,
+                  );
+                }
               } else if (state.currentWeatherStatus == BlocStatus.Success) {
                 return ListView(
                   padding: EdgeInsets.symmetric(
