@@ -54,10 +54,10 @@ class ForecastWeather {
       'city': city,
       'latitude': latitude,
       'longitude': longitude,
-      'temperature': temperature,
-      'condition': condition,
-      'time': time.map((e) => e.toIso8601String()).toList(),
-      'weatherLevel': weatherLevel,
+      'temperature': jsonEncode(temperature),
+      'condition': jsonEncode(condition),
+      'time': jsonEncode(time.map((e) => e.toIso8601String()).toList()),
+      'weatherLevel': jsonEncode(weatherLevel),
     };
   }
 
@@ -88,16 +88,17 @@ class ForecastWeather {
       city: (map['city'] as String),
       latitude: (map['latitude'] as num)?.toDouble(),
       longitude: (map['longitude'] as num)?.toDouble(),
-      temperature: (map['temperature']
+      temperature: (jsonDecode(map['temperature'])
           .map<double>((val) => (val as num)?.toDouble())
           .toList()),
-      condition:
-          (map['condition'].map<int>((val) => (val as int) ?? 0).toList()),
-      time: (map['time']
+      condition: (jsonDecode(map['condition'])
+          .map<int>((val) => (val as int) ?? 0)
+          .toList()),
+      time: (jsonDecode(map['time'])
           .map<DateTime>((val) =>
               DateTime.tryParse((val as String ?? '')) ?? DateTime.now())
           .toList()),
-      weatherLevel: (map['weatherLevel']
+      weatherLevel: (jsonDecode(map['weatherLevel'])
           .map<String>((val) => (val as String))
           .toList() as List<String>),
     );

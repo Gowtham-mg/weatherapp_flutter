@@ -1,34 +1,119 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:clima/app_response.dart';
 import 'package:clima/models/current_weather.dart';
 import 'package:clima/models/forecast_weather.dart';
+import 'package:clima/repository/weather_db.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:connectivity/connectivity.dart';
 
 const String apiKey = '8a615e769eec04422a333dc69171f25b';
 const String currentWeather = 'https://api.openweathermap.org/data/2.5/weather';
 const String forecastWeather =
     'https://api.openweathermap.org/data/2.5/forecast';
+const String noRecentDataAvaiable =
+    "No data available, We suggest you to connect to network";
 
 class WeatherRepository {
+  final WeatherDB weatherDB;
+  final Connectivity connectivity = Connectivity();
+  String _networkStatus1 = '';
+  bool isActive = false;
+
+  WeatherRepository(this.weatherDB);
+
+  void checkConnectivity() async {
+    StreamSubscription<ConnectivityResult> subscription =
+        connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      var conn = getConnectionValue(result);
+      _networkStatus1 = 'Check $conn Connection:: ';
+      if (result == ConnectivityResult.mobile ||
+          result == ConnectivityResult.wifi) {
+        isActive = true;
+      } else {
+        isActive = false;
+      }
+    });
+  }
+
+  String getConnectionValue(var connectivityResult) {
+    switch (connectivityResult) {
+      case ConnectivityResult.mobile:
+        return 'Mobile';
+      case ConnectivityResult.wifi:
+        return 'Wi-Fi';
+      case ConnectivityResult.none:
+        return 'Internet';
+      default:
+        return 'Internet';
+    }
+  }
+
   Future<AppResponse<CurrentWeather>> getCityCurrentWeather(
       String cityName) async {
-    var response = await http.get('$currentWeather?q=$cityName&appid=$apiKey');
-    AppResponse<CurrentWeather> currentWeatherResponse =
-        decodeWeatherResponse(response);
-    // if (currentWeatherResponse.isSuccess) {
-    //   weatherBox.add(currentWeatherResponse.data);
-    // }
-    return currentWeatherResponse;
+    if (isActive) {
+      var response =
+          await http.get('$currentWeather?q=$cityName&appid=$apiKey');
+      AppResponse<CurrentWeather> currentWeatherResponse =
+          decodeWeatherResponse(response);
+      if (currentWeatherResponse.isSuccess) {
+        await weatherDB
+            .storeCurrentWeatherByCityName(currentWeatherResponse.data);
+      }
+      return currentWeatherResponse;
+    } else {
+      AppResponse<CurrentWeather> currentWeatherResp =
+          await weatherDB.getCurrentWeatherByCityName(cityName);
+      if (currentWeatherResp.isSuccess) {
+        CurrentWeather currentWeather = currentWeatherResp.data;
+        DateTime currentTime = DateTime.now();
+        final bool isValidWeatherAvailable =
+            currentTime.isBefore(currentWeather.time) &&
+                (currentTime.difference(currentWeather.time).inHours < 4);
+        if (isValidWeatherAvailable) {
+          return currentWeatherResp;
+        } else {
+          return AppResponse.named(error: noRecentDataAvaiable);
+        }
+      } else {
+        return currentWeatherResp;
+      }
+    }
   }
 
   Future<AppResponse<CurrentWeather>> getLocationWeather() async {
     Position position = await Geolocator()
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
-    var currentWeatherResponse = await http.get(
-        '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
-    return decodeWeatherResponse(currentWeatherResponse);
+    if (isActive) {
+      var response = await http.get(
+          '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
+      AppResponse<CurrentWeather> currentWeatherResponse =
+          decodeWeatherResponse(response);
+      if (currentWeatherResponse.isSuccess) {
+        await weatherDB
+            .storeCurrentWeatherByLocation(currentWeatherResponse.data);
+      }
+      return currentWeatherResponse;
+    } else {
+      AppResponse<CurrentWeather> currentWeatherResp =
+          await weatherDB.getCurrentWeatherByLocation(position);
+      if (currentWeatherResp.isSuccess) {
+        CurrentWeather currentWeather = currentWeatherResp.data;
+        DateTime currentTime = DateTime.now();
+        final bool isValidWeatherAvailable =
+            currentTime.isBefore(currentWeather.time) &&
+                (currentTime.difference(currentWeather.time).inHours < 4);
+        if (isValidWeatherAvailable) {
+          return currentWeatherResp;
+        } else {
+          return AppResponse.named(error: noRecentDataAvaiable);
+        }
+      } else {
+        return currentWeatherResp;
+      }
+    }
   }
 
   AppResponse<CurrentWeather> decodeWeatherResponse(http.Response response) {

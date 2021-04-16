@@ -21,7 +21,7 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
     super.initState();
   }
 
-  void getCurrentLocation() {
+  Future<void> getCurrentLocation() async {
     BlocProvider.of<CurrentWeatherCubit>(context).getWeatherByCurrentLocation();
   }
 

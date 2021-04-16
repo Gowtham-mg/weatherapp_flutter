@@ -1,10 +1,13 @@
 import 'package:clima/app_response.dart';
+import 'package:clima/models/forecast_weather.dart';
+import 'package:clima/repository/weather.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:clima/models/current_weather.dart';
 
 const String currentWeatherTable = "CurrentWeather";
+const String forecastWeatherTable = "ForecastWeather";
 
 class WeatherDB {
   Database db;
@@ -23,8 +26,14 @@ class WeatherDB {
     String path = await getPath();
     db = await openDatabase(path);
     await db.execute(
-        'CREATE TABLE $currentWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature REAL, condition INTEGER, time TEXT, weatherLevel TEXT)');
+        'CREATE TABLE IF NOT EXISTS $currentWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature REAL, condition INTEGER, time TEXT, weatherLevel TEXT)');
+    await db.execute(
+        'CREATE TABLE IF NOT EXISTS $forecastWeatherTable (city TEXT PRIMARY KEY, latitude REAL, longitude REAL, temperature TEXT, condition TEXT, time TEXT, weatherLevel TEXT)');
   }
+
+  //
+  // CURRENT Weather
+  //
 
   Future<void> storeCurrentWeatherByCityName(CurrentWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
@@ -57,7 +66,7 @@ class WeatherDB {
   Future<void> storeCurrentWeatherByLocation(CurrentWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
       "$currentWeatherTable",
-      where: 'latitude = ?, longitude = ?',
+      where: 'latitude = ? and longitude = ?',
       whereArgs: [weather.latitude, weather.longitude],
       columns: [
         'city',
@@ -76,8 +85,8 @@ class WeatherDB {
       await db.update(
         "$currentWeatherTable",
         weather.toMap(),
-        where: "city = ?",
-        whereArgs: [weather.city],
+        where: 'latitude = ?, longitude = ?',
+        whereArgs: [weather.latitude, weather.longitude],
       );
     }
   }
@@ -109,8 +118,8 @@ class WeatherDB {
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       final Position position) async {
     List<Map<String, dynamic>> data = await db.query(
-      currentWeatherTable,
-      where: "latitude = ?, longitude = ?",
+      "$forecastWeatherTable",
+      where: "latitude = ? and longitude = ?",
       whereArgs: [
         position.latitude,
         position.longitude,
@@ -128,6 +137,113 @@ class WeatherDB {
     );
     if (data.length != 0) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
+    } else {
+      return AppResponse.named(error: 'No data Avaialble');
+    }
+  }
+
+  Future<void> storeForecastWeatherByCityName(ForecastWeather weather) async {
+    List<Map<String, dynamic>> data = await db.query(
+      "$forecastWeatherTable",
+      where: 'city = ?',
+      whereArgs: [weather.city],
+      columns: [
+        'city',
+        'latitude',
+        'longitude',
+        'temperature',
+        'condition',
+        'time',
+        'weatherLevel'
+      ],
+    );
+    if (data.length == 0) {
+      await db.insert("$forecastWeatherTable", weather.toMap());
+    } else {
+      await db.update(
+        "$forecastWeatherTable",
+        weather.toMap(),
+        where: "city = ?",
+        whereArgs: [weather.city],
+      );
+    }
+  }
+
+  //
+  // FORECAST Weather
+  //
+
+  Future<void> storeForecastWeatherByLocation(ForecastWeather weather) async {
+    List<Map<String, dynamic>> data = await db.query(
+      "$forecastWeatherTable",
+      where: 'latitude = ?, longitude = ?',
+      whereArgs: [weather.latitude, weather.longitude],
+      columns: [
+        'city',
+        'latitude',
+        'longitude',
+        'temperature',
+        'condition',
+        'time',
+        'weatherLevel'
+      ],
+    );
+    if (data.length == 0) {
+      await db.insert("$forecastWeatherTable", weather.toMap());
+    } else {
+      await db.update(
+        "$forecastWeatherTable",
+        weather.toMap(),
+        where: 'latitude = ?, longitude = ?',
+        whereArgs: [weather.latitude, weather.longitude],
+      );
+    }
+  }
+
+  Future<AppResponse<ForecastWeather>> getForecastWeatherByCityName(
+      final String cityName) async {
+    List<Map<String, dynamic>> data = await db.query(
+      forecastWeatherTable,
+      where: "city = ?",
+      whereArgs: [cityName],
+      columns: [
+        'city',
+        'latitude',
+        'longitude',
+        'temperature',
+        'condition',
+        'time',
+        'weatherLevel'
+      ],
+    );
+    if (data.length != 0) {
+      return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
+    } else {
+      return AppResponse.named(error: 'No data Avaialble');
+    }
+  }
+
+  Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
+      final Position position) async {
+    List<Map<String, dynamic>> data = await db.query(
+      forecastWeatherTable,
+      where: "latitude = ?, longitude = ?",
+      whereArgs: [
+        position.latitude,
+        position.longitude,
+      ],
+      columns: [
+        'city',
+        'latitude',
+        'longitude',
+        'temperature',
+        'condition',
+        'time',
+        'weatherLevel'
+      ],
+    );
+    if (data.length != 0) {
+      return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
     } else {
       return AppResponse.named(error: 'No data Avaialble');
     }
