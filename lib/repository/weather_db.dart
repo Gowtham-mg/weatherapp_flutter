@@ -2,10 +2,10 @@ import 'package:clima/app_response.dart';
 import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:clima/models/current_weather.dart';
+import 'package:location/location.dart';
 
 const String currentWeatherTable = "CurrentWeather";
 const String forecastWeatherTable = "ForecastWeather";
@@ -130,7 +130,7 @@ class WeatherDB {
   }
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
-      final Position position) async {
+      final LocationData position) async {
     List<Map<String, dynamic>> data = await db.query(
       "$currentWeatherTable",
       where: "latitude = ? and longitude = ?",
@@ -247,7 +247,7 @@ class WeatherDB {
   }
 
   Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
-      final Position position) async {
+      final LocationData position) async {
     List<Map<String, dynamic>> data = await db.query(
       forecastWeatherTable,
       where: "latitude = ? and longitude = ?",

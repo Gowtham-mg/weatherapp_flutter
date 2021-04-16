@@ -4,10 +4,13 @@ import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:location/location.dart';
 
 class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
   final WeatherRepository weatherRepository;
-  CurrentWeatherCubit(this.weatherRepository)
+  final Location location;
+
+  CurrentWeatherCubit(this.weatherRepository, this.location)
       : super(CurrentWeatherState.named(
             currentWeatherStatus: BlocStatus.Initial));
 
@@ -50,8 +53,10 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
       currentWeatherStatus: BlocStatus.Loading,
       forecastWeatherStatus: BlocStatus.Loading,
     ));
+    LocationData position = await location.getLocation();
+
     AppResponse<CurrentWeather> weatherResponse =
-        await weatherRepository.getLocationWeather();
+        await weatherRepository.getLocationWeather(position);
     if (weatherResponse.isError) {
       emit(state.copyWith(
         currentWeatherStatus: BlocStatus.Error,
@@ -65,7 +70,7 @@ class CurrentWeatherCubit extends Cubit<CurrentWeatherState> {
     }
 
     AppResponse<ForecastWeather> forecastResponse =
-        await weatherRepository.getLocationForecastWeather();
+        await weatherRepository.getLocationForecastWeather(position);
     if (weatherResponse.isError) {
       emit(state.copyWith(
         forecastWeatherStatus: BlocStatus.Error,

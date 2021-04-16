@@ -38,6 +38,13 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
         body: SafeArea(
           child: BlocBuilder<CurrentWeatherCubit, CurrentWeatherState>(
             builder: (BuildContext context, CurrentWeatherState state) {
+              // print(state.currentWeatherStatus);
+              // print(state.error);
+              // print(state.forecast?.toMap());
+              // print(state.forecastWeatherStatus);
+              // print(state.weather?.toMap());
+              // print(state.cityName);
+
               if (state.currentWeatherStatus == BlocStatus.Loading) {
                 return Center(
                   child: SpinKitDoubleBounce(

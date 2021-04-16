@@ -6,9 +6,7 @@ PODS:
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - geolocator (5.3.1):
-    - Flutter
-  - location_permissions (2.0.5):
+  - location (0.0.1):
     - Flutter
   - Reachability (3.2)
   - sqflite (0.0.2):
@@ -18,8 +16,7 @@ PODS:
 DEPENDENCIES:
   - connectivity (from `.symlinks/plugins/connectivity/ios`)
   - Flutter (from `Flutter`)
-  - geolocator (from `.symlinks/plugins/geolocator/ios`)
-  - location_permissions (from `.symlinks/plugins/location_permissions/ios`)
+  - location (from `.symlinks/plugins/location/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
 
 SPEC REPOS:
@@ -32,10 +29,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/connectivity/ios"
   Flutter:
     :path: Flutter
-  geolocator:
-    :path: ".symlinks/plugins/geolocator/ios"
-  location_permissions:
-    :path: ".symlinks/plugins/location_permissions/ios"
+  location:
+    :path: ".symlinks/plugins/location/ios"
   sqflite:
     :path: ".symlinks/plugins/sqflite/ios"
 
@@ -43,8 +38,7 @@ SPEC CHECKSUMS:
   connectivity: c4130b2985d4ef6fd26f9702e886bd5260681467
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  geolocator: 460cc8e850b616f8c0e90944c86517d91ccbb686
-  location_permissions: 4a49d4e5bec5b653643e551ab77963cc99bb0e4a
+  location: 3a2eed4dd2fab25e7b7baf2a9efefe82b512d740
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
 

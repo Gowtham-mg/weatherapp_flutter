@@ -2,6 +2,8 @@
     package="co.appbrewery.clima">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.hardware.location.gps" />
 
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
@@ -28,16 +30,13 @@
                 android:resource="@drawable/launch_background" />
 
             <!-- Theme to apply as soon as Flutter begins rendering frames -->
-            <meta-data
+            <!-- <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme"
-            />
+            /> -->
             <meta-data
                 android:name="flutterEmbedding"
                 android:value="2" />
-            <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-                <item name="android:windowBackground">@drawable/[your_launch_drawable_here]</item>
-            </style>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

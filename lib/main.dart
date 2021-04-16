@@ -3,22 +3,29 @@ import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:clima/repository/weather_db.dart';
 import 'package:clima/screens/current_location_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:location/location.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final WeatherDB weatherDB = WeatherDB();
   await weatherDB.openDB();
-  final WeatherRepository weatherRepository = WeatherRepository(weatherDB);
+  final Connectivity connectivity = Connectivity();
+  final WeatherRepository weatherRepository = WeatherRepository(
+    weatherDB,
+    connectivity,
+  );
   weatherRepository.checkConnectivity();
   runApp(MyApp(weatherRepository: weatherRepository));
 }
 
 class MyApp extends StatelessWidget {
   final WeatherRepository weatherRepository;
+  final Location location = Location();
 
-  const MyApp({Key key, @required this.weatherRepository}) : super(key: key);
+  MyApp({Key key, @required this.weatherRepository}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +33,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<CurrentWeatherCubit>(
           create: (BuildContext context) =>
-              CurrentWeatherCubit(weatherRepository),
+              CurrentWeatherCubit(weatherRepository, location),
         ),
         BlocProvider<SearchWeatherCubit>(
           create: (BuildContext context) =>

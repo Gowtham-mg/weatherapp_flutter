@@ -7,7 +7,7 @@ import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather_db.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 import 'package:connectivity/connectivity.dart';
 
 const String apiKey = '8a615e769eec04422a333dc69171f25b';
@@ -19,11 +19,11 @@ const String noRecentDataAvaiable =
 
 class WeatherRepository {
   final WeatherDB weatherDB;
-  final Connectivity connectivity = Connectivity();
+  final Connectivity connectivity;
   String _networkStatus1 = '';
   bool isActive = true;
 
-  WeatherRepository(this.weatherDB);
+  WeatherRepository(this.weatherDB, this.connectivity);
 
   void checkConnectivity() async {
     // ConnectivityResult connectivityResult =
@@ -59,9 +59,8 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<ForecastWeather>> getLocationForecastWeather() async {
-    Position position = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+  Future<AppResponse<ForecastWeather>> getLocationForecastWeather(
+      LocationData position) async {
     if (isActive) {
       var forecastWeatherNetworkResponse = await http.get(
           '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
@@ -133,7 +132,7 @@ class WeatherRepository {
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherOffline(
       {String cityName,
-      Position position,
+      LocationData position,
       @required AppResponse<CurrentWeather> currentWeatherResp}) async {
     if (currentWeatherResp.isSuccess) {
       CurrentWeather currentWeather = currentWeatherResp.data;
@@ -215,9 +214,9 @@ class WeatherRepository {
     }
   }
 
-  Future<AppResponse<CurrentWeather>> getLocationWeather() async {
-    Position position = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+  Future<AppResponse<CurrentWeather>> getLocationWeather(
+      LocationData position) async {
+    print('${position.latitude} ${position.longitude}');
     if (isActive) {
       var response = await http.get(
           '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey');
