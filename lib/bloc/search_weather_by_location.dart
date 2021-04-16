@@ -46,6 +46,13 @@ class SearchWeatherCubit extends Cubit<SearchWeatherState> {
       ));
     }
   }
+
+  void reset() {
+    emit(SearchWeatherState.named(
+      forecastWeatherStatus: BlocStatus.Initial,
+      currentWeatherStatus: BlocStatus.Initial,
+    ));
+  }
 }
 
 class SearchWeatherState extends Equatable {

@@ -1,6 +1,7 @@
 import 'package:clima/app_response.dart';
 import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -52,7 +53,11 @@ class WeatherDB {
       limit: 1,
     );
     if (data.length == 0) {
-      await db.insert("$currentWeatherTable", weather.toMap());
+      await db.insert(
+        "$currentWeatherTable",
+        weather.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     } else {
       await db.update(
         "$currentWeatherTable",
@@ -79,13 +84,21 @@ class WeatherDB {
       ],
       limit: 1,
     );
+    debugPrint("storeCurrentWeatherByLocation $data");
+    debugPrint("storeCurrentWeatherByLocation Data ${weather.toMap()}");
     if (data.length == 0) {
-      await db.insert("$currentWeatherTable", weather.toMap());
+      await db.insert(
+        "$currentWeatherTable",
+        weather.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      debugPrint("Inserting");
     } else {
+      debugPrint("Updating");
       await db.update(
         "$currentWeatherTable",
         weather.toMap(),
-        where: 'latitude = ?, longitude = ?',
+        where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
       );
     }
@@ -108,6 +121,7 @@ class WeatherDB {
       ],
       limit: 1,
     );
+    debugPrint('getCurrentWeatherByCityName Offline $data');
     if (data.length != 0) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
@@ -118,7 +132,7 @@ class WeatherDB {
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       final Position position) async {
     List<Map<String, dynamic>> data = await db.query(
-      "$forecastWeatherTable",
+      "$currentWeatherTable",
       where: "latitude = ? and longitude = ?",
       whereArgs: [
         position.latitude,
@@ -135,6 +149,7 @@ class WeatherDB {
       ],
       limit: 1,
     );
+    debugPrint('getCurrentWeatherByLocation Offline $data');
     if (data.length != 0) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
@@ -158,7 +173,11 @@ class WeatherDB {
       ],
     );
     if (data.length == 0) {
-      await db.insert("$forecastWeatherTable", weather.toMap());
+      await db.insert(
+        "$forecastWeatherTable",
+        weather.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     } else {
       await db.update(
         "$forecastWeatherTable",
@@ -176,7 +195,7 @@ class WeatherDB {
   Future<void> storeForecastWeatherByLocation(ForecastWeather weather) async {
     List<Map<String, dynamic>> data = await db.query(
       "$forecastWeatherTable",
-      where: 'latitude = ?, longitude = ?',
+      where: 'latitude = ? and longitude = ?',
       whereArgs: [weather.latitude, weather.longitude],
       columns: [
         'city',
@@ -189,12 +208,16 @@ class WeatherDB {
       ],
     );
     if (data.length == 0) {
-      await db.insert("$forecastWeatherTable", weather.toMap());
+      await db.insert(
+        "$forecastWeatherTable",
+        weather.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     } else {
       await db.update(
         "$forecastWeatherTable",
         weather.toMap(),
-        where: 'latitude = ?, longitude = ?',
+        where: 'latitude = ? and longitude = ?',
         whereArgs: [weather.latitude, weather.longitude],
       );
     }
@@ -227,7 +250,7 @@ class WeatherDB {
       final Position position) async {
     List<Map<String, dynamic>> data = await db.query(
       forecastWeatherTable,
-      where: "latitude = ?, longitude = ?",
+      where: "latitude = ? and longitude = ?",
       whereArgs: [
         position.latitude,
         position.longitude,
@@ -242,6 +265,7 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
+    debugPrint("getForecastWeatherByLocation $data");
     if (data.length != 0) {
       return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
     } else {

@@ -1,6 +1,7 @@
 import 'package:clima/bloc/current_weather.dart';
+import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
-import 'package:clima/constants.dart';
+import 'package:clima/widgets/current_weather_widget.dart';
 import 'package:clima/widgets/status_bar_color_changer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -84,7 +85,7 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                         ),
                         Spacer(),
                         IconButton(
-                          onPressed: () async {
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -101,38 +102,33 @@ class _CurrentLocationScreenState extends State<CurrentLocationScreen> {
                         ),
                       ],
                     ),
-                    Text(
-                      WeatherRepository.getWeatherIcon(state.weather.condition),
-                      style: TextStyle(fontSize: _width * 0.3),
-                      textAlign: TextAlign.center,
+                    CurrentWeatherWidget(
+                      temperature: '${state.weather.temperature}°C',
+                      weatherIcon: WeatherRepository.getWeatherIcon(
+                          state.weather.condition),
+                      weatherLevel: state.weather.weatherLevel,
+                      tempFontSize: _width * 0.3,
                     ),
-                    Text(
-                      state.weather.weatherLevel,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w500,
-                        height: 2,
+                    Padding(
+                      padding: EdgeInsets.only(top: 30, bottom: 15),
+                      child: Text(
+                        'Forecasted data:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    Text(
-                      '${state.weather.temperature}°',
-                      style: TextStyle(
-                        fontSize: 65.0,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(top: 30),
-                      height: 150,
+                    SizedBox(
+                      height: 160,
                       child: state.forecastWeatherStatus == BlocStatus.Loading
                           ? Center(child: CircularProgressIndicator())
                           : state.forecastWeatherStatus == BlocStatus.Success
                               ? ListView.separated(
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: state.forecast.temperature.length,
+                                  itemCount:
+                                      state.forecast?.temperature?.length ?? 0,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return SizedBox(width: 20);
