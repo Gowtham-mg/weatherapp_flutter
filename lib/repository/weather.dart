@@ -6,11 +6,10 @@ import 'package:clima/models/current_weather.dart';
 import 'package:clima/models/forecast_weather.dart';
 import 'package:clima/repository/weather_db.dart';
 import 'package:clima/repository/weather_offline.dart';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 
-const String apiKey = '8a615e769eec04422a333dc69171f25b';
+const String demoApiKey = '8a615e769eec04422a333dc69171f25b';
 const String currentWeather = 'https://api.openweathermap.org/data/2.5/weather';
 const String forecastWeather =
     'https://api.openweathermap.org/data/2.5/forecast';
@@ -44,7 +43,7 @@ class WeatherRepository {
       // debugPrint("getForecastWeatherByLocation");
       http.Response forecastWeatherNetworkResponse = await http
           .get(
-              '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey')
+              '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$demoApiKey')
           .timeout(
             Duration(seconds: 5),
             onTimeout: onTimeOut,
@@ -67,7 +66,7 @@ class WeatherRepository {
       final String cityName) async {
     try {
       http.Response forecastWeatherNetworkResponse = await http
-          .get('$forecastWeather?q=$cityName&appid=$apiKey')
+          .get('$forecastWeather?q=$cityName&appid=$demoApiKey')
           .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       // if (forecastWeatherNetworkResponse.statusCode != 101) {
       AppResponse<ForecastWeather> forecastWeatherResponse =
@@ -87,7 +86,7 @@ class WeatherRepository {
       String cityName) async {
     try {
       http.Response response = await http
-          .get('$currentWeather?q=$cityName&appid=$apiKey')
+          .get('$currentWeather?q=$cityName&appid=$demoApiKey')
           .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       AppResponse<CurrentWeather> currentWeatherResponse =
           decodeCurrentWeatherResponse(response);
@@ -107,7 +106,7 @@ class WeatherRepository {
     try {
       http.Response response = await http
           .get(
-              '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey')
+              '$currentWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$demoApiKey')
           .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       AppResponse<CurrentWeather> currentWeatherResponse =
           decodeCurrentWeatherResponse(response);
@@ -199,7 +198,13 @@ class WeatherRepository {
     }
   }
 
-  static double convertToCelsius(double temperatureInKelvin) {
-    return temperatureInKelvin - 273.15;
+  static String convertToCelsius(double temperatureInKelvin) {
+    double temperature = temperatureInKelvin - 273.15;
+    int diff = temperature.compareTo(temperature.toInt());
+    if (diff == 0) {
+      return temperature.toInt().toString();
+    } else {
+      return (temperature).toStringAsFixed(2);
+    }
   }
 }

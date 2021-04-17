@@ -5,7 +5,6 @@ import 'package:clima/bloc/search_weather_by_location.dart';
 import 'package:clima/repository/weather.dart';
 import 'package:clima/repository/weather_db.dart';
 import 'package:clima/repository/weather_offline.dart';
-import 'package:connectivity/connectivity.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:location/location.dart';
 import 'package:bloc_test/bloc_test.dart';
@@ -20,15 +19,8 @@ void main() async {
       WeatherRepository(weatherDB, weatherOffline);
   final Location location = Location();
   await weatherDB.openDB();
-  // final Connectivity connectivity = Connectivity();
 
   checkWeatherBloc(weatherRepository, location);
-  // connectivity.onConnectivityChanged.listen((result) {
-  //   if (result == ConnectivityResult.mobile ||
-  //       result == ConnectivityResult.wifi) {
-  //     checkWeatherBloc(weatherRepository, location);
-  //   }
-  // });
 }
 
 void checkWeatherBloc(WeatherRepository weatherRepository, Location location) {
