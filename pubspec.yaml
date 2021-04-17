@@ -18,6 +18,7 @@ dependencies:
   equatable: ^1.2.6
   path: ^1.7.0
   connectivity: ^2.0.2
+  bloc_test: ^7.1.0
 
 dev_dependencies:
   flutter_test:

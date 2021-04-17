@@ -89,17 +89,17 @@ class WeatherDB {
       ],
       limit: 1,
     );
-    debugPrint("storeCurrentWeatherByLocation $data");
-    debugPrint("storeCurrentWeatherByLocation Data ${weather.toMap()}");
+    // debugPrint("storeCurrentWeatherByLocation $data");
+    // debugPrint("storeCurrentWeatherByLocation Data ${weather.toMap()}");
     if (data.isEmpty) {
       await db.insert(
         currentWeatherTable,
         weather.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      debugPrint("Inserting");
+      // debugPrint("Inserting");
     } else {
-      debugPrint("Updating");
+      // debugPrint("Updating");
       await db.update(
         currentWeatherTable,
         weather.toMap(),
@@ -127,7 +127,7 @@ class WeatherDB {
       ],
       limit: 1,
     );
-    debugPrint('getCurrentWeatherByCityName Offline $data');
+    // debugPrint('getCurrentWeatherByCityName Offline $data');
     if (data.isNotEmpty) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
@@ -155,7 +155,7 @@ class WeatherDB {
       ],
       limit: 1,
     );
-    debugPrint('getCurrentWeatherByLocation Offline $data');
+    // debugPrint('getCurrentWeatherByLocation Offline $data');
     if (data.isNotEmpty) {
       return AppResponse.named(data: CurrentWeather.fromLocalMap(data.first));
     } else {
@@ -182,8 +182,8 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    debugPrint("storeForecastWeatherByCityName $data");
-    debugPrint("storeForecastWeatherByCityName Map ${weather.toMap()}");
+    // debugPrint("storeForecastWeatherByCityName $data");
+    // debugPrint("storeForecastWeatherByCityName Map ${weather.toMap()}");
     if (data.isEmpty) {
       await db.insert(
         forecastWeatherTable,
@@ -216,8 +216,8 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    debugPrint("storeForecastWeatherByLocation $data");
-    debugPrint("storeForecastWeatherByLocation Map ${weather.toMap()}");
+    // debugPrint("storeForecastWeatherByLocation $data");
+    // debugPrint("storeForecastWeatherByLocation Map ${weather.toMap()}");
 
     if (data.isEmpty) {
       await db.insert(
@@ -252,8 +252,8 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    debugPrint("getForecastWeatherByCityName $data");
-    debugPrint("getForecastWeatherByLocation CityNAme $cityName");
+    // debugPrint("getForecastWeatherByCityName $data");
+    // debugPrint("getForecastWeatherByLocation CityNAme $cityName");
 
     if (data.isNotEmpty) {
       return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));
@@ -281,9 +281,9 @@ class WeatherDB {
         'weatherLevel'
       ],
     );
-    debugPrint("getForecastWeatherByLocation $data");
-    debugPrint(
-        "getForecastWeatherByLocation Location ${position.latitude} ${position.longitude}");
+    // debugPrint("getForecastWeatherByLocation $data");
+    // debugPrint(
+    //     "getForecastWeatherByLocation Location ${position.latitude} ${position.longitude}");
 
     if (data.isNotEmpty) {
       return AppResponse.named(data: ForecastWeather.fromLocalMap(data.first));

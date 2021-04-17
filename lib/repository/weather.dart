@@ -41,7 +41,7 @@ class WeatherRepository {
   Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
       LocationData position) async {
     try {
-      debugPrint("getForecastWeatherByLocation");
+      // debugPrint("getForecastWeatherByLocation");
       http.Response forecastWeatherNetworkResponse = await http
           .get(
               '$forecastWeather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey')
@@ -51,8 +51,8 @@ class WeatherRepository {
           );
       AppResponse<ForecastWeather> forecastWeatherResponse =
           decodeForecastWeatherResponse(forecastWeatherNetworkResponse);
-      debugPrint(
-          "POSITION forecastWeatherResponse.isSuccess ${forecastWeatherResponse.isSuccess}");
+      // debugPrint(
+      // "POSITION forecastWeatherResponse.isSuccess ${forecastWeatherResponse.isSuccess}");
       if (forecastWeatherResponse.isSuccess) {
         await weatherDB
             .storeForecastWeatherByLocation(forecastWeatherResponse.data);
@@ -73,7 +73,7 @@ class WeatherRepository {
       AppResponse<ForecastWeather> forecastWeatherResponse =
           decodeForecastWeatherResponse(forecastWeatherNetworkResponse);
       if (forecastWeatherResponse.isSuccess) {
-        debugPrint('POSITION storing forecast weather from online');
+        // debugPrint('POSITION storing forecast weather from online');
         await weatherDB
             .storeForecastWeatherByCityName(forecastWeatherResponse.data);
       }
@@ -103,7 +103,7 @@ class WeatherRepository {
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       LocationData position) async {
-    debugPrint('POSITION ${position.latitude} ${position.longitude}');
+    // debugPrint('POSITION ${position.latitude} ${position.longitude}');
     try {
       http.Response response = await http
           .get(
@@ -111,10 +111,10 @@ class WeatherRepository {
           .timeout(Duration(seconds: 5), onTimeout: onTimeOut);
       AppResponse<CurrentWeather> currentWeatherResponse =
           decodeCurrentWeatherResponse(response);
-      debugPrint(
-          "POSITION currentWeatherResponse.isSuccess ${currentWeatherResponse.isSuccess}");
+      // debugPrint(
+      //     "POSITION currentWeatherResponse.isSuccess ${currentWeatherResponse.isSuccess}");
       if (currentWeatherResponse.isSuccess) {
-        debugPrint('POSITION storing current weather from online');
+        // debugPrint('POSITION storing current weather from online');
         await weatherDB
             .storeCurrentWeatherByLocation(currentWeatherResponse.data);
       }

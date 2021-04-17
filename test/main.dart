@@ -1,86 +1,74 @@
-// import 'package:clima/app_response.dart';
-// import 'package:clima/models/current_weather.dart';
-// import 'package:clima/repository/weather.dart';
-// import 'package:clima/repository/weather_db.dart';
-// import 'package:test/test.dart';
+import 'dart:io';
 
-// void main() {
-//   // group('Weather network', () {
-//   final WeatherDB weatherDB = WeatherDB();
-//   WeatherRepository weatherRepository =
-//       WeatherRepository(weatherDB);
+import 'package:clima/bloc/current_weather.dart';
+import 'package:clima/bloc/search_weather_by_location.dart';
+import 'package:clima/repository/weather.dart';
+import 'package:clima/repository/weather_db.dart';
+import 'package:clima/repository/weather_offline.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:location/location.dart';
+import 'package:bloc_test/bloc_test.dart';
 
-//   test(
-//       'Weather data is fetched by cityname from network and parsed, its not equal to null',
-//       () async {
-//     await weatherDB.openDB();
-//     final AppResponse<CurrentWeather> currentWeather =
-//         await weatherRepository.getCurrentWeatherByCityName("Coimbatore");
-//     expect(currentWeather.isSuccess, true);
-//     expect(currentWeather.data.city, isNotNull);
-//     expect(currentWeather.data.condition, isNotNull);
-//     expect(currentWeather.data.latitude, isNotNull);
-//     expect(currentWeather.data.longitude, isNotNull);
-//     expect(currentWeather.data.temperature, isNotNull);
-//     expect(currentWeather.data.time, isNotNull);
-//     expect(currentWeather.data.weatherLevel, isNotNull);
-//   });
+void main() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = null;
 
-//   // test(
-//   //     'Weather data is fetched by Current Location from network and parsed, its not equal to null',
-//   //     () async {
-//   //   final AppResponse<CurrentWeather> currentWeather =
-//   //       await weatherRepository.getLocationWeather();
-//   //   expect(currentWeather.isSuccess, true);
-//   //   expect(currentWeather.data.city, isNotNull);
-//   //   expect(currentWeather.data.condition, isNotNull);
-//   //   expect(currentWeather.data.latitude, isNotNull);
-//   //   expect(currentWeather.data.longitude, isNotNull);
-//   //   expect(currentWeather.data.temperature, isNotNull);
-//   //   expect(currentWeather.data.time, isNotNull);
-//   //   expect(currentWeather.data.weatherLevel, isNotNull);
-//   // });
+  final WeatherDB weatherDB = WeatherDB();
+  final WeatherOffline weatherOffline = WeatherOffline(weatherDB);
+  final WeatherRepository weatherRepository =
+      WeatherRepository(weatherDB, weatherOffline);
+  final Location location = Location();
+  await weatherDB.openDB();
+  // final Connectivity connectivity = Connectivity();
 
-//   // test(
-//   //     'Forecast Current loction Weather data is fetched from network and parsed, its not equal to null',
-//   //     () async {
-//   //   final AppResponse<ForecastWeather> forecastWeather =
-//   //       await weatherRepository.getLocationForecastWeather();
-//   //   expect(forecastWeather.isSuccess, true);
-//   //   expect(forecastWeather.data.city, isNotNull);
-//   //   expect(forecastWeather.data.condition, isNotNull);
-//   //   expect(forecastWeather.data.latitude, isNotNull);
-//   //   expect(forecastWeather.data.longitude, isNotNull);
-//   //   expect(forecastWeather.data.temperature, isNotNull);
-//   //   expect(forecastWeather.data.time, isNotNull);
-//   //   expect(forecastWeather.data.weatherLevel, isNotNull);
-//   //   final int dataLength = forecastWeather.data.temperature.length;
-//   //   final bool isDataLengthEqual =
-//   //       ((forecastWeather.data.condition.length == dataLength) &&
-//   //           (forecastWeather.data.weatherLevel.length == dataLength) &&
-//   //           (forecastWeather.data.time.length == dataLength));
-//   //   expect(isDataLengthEqual, true);
-//   // });
+  checkWeatherBloc(weatherRepository, location);
+  // connectivity.onConnectivityChanged.listen((result) {
+  //   if (result == ConnectivityResult.mobile ||
+  //       result == ConnectivityResult.wifi) {
+  //     checkWeatherBloc(weatherRepository, location);
+  //   }
+  // });
+}
 
-//   // test(
-//   //     'Forecast Weather data by city name is fetched from network and parsed, its not equal to null',
-//   //     () async {
-//   //   final AppResponse<ForecastWeather> forecastWeather =
-//   //       await weatherRepository.getLocationForecastWeather();
-//   //   expect(forecastWeather.isSuccess, true);
-//   //   expect(forecastWeather.data.city, isNotNull);
-//   //   expect(forecastWeather.data.condition, isNotNull);
-//   //   expect(forecastWeather.data.latitude, isNotNull);
-//   //   expect(forecastWeather.data.longitude, isNotNull);
-//   //   expect(forecastWeather.data.temperature, isNotNull);
-//   //   expect(forecastWeather.data.time, isNotNull);
-//   //   expect(forecastWeather.data.weatherLevel, isNotNull);
-//   //   final int dataLength = forecastWeather.data.temperature.length;
-//   //   final bool isDataLengthEqual =
-//   //       ((forecastWeather.data.condition.length == dataLength) &&
-//   //           (forecastWeather.data.weatherLevel.length == dataLength) &&
-//   //           (forecastWeather.data.time.length == dataLength));
-//   //   expect(isDataLengthEqual, true);
-//   // });
-//   // });
-// }
+void checkWeatherBloc(WeatherRepository weatherRepository, Location location) {
+  blocTest(
+    'Current Location Weather Bloc test passed',
+    build: () => CurrentWeatherCubit(weatherRepository, location),
+    act: (CurrentWeatherCubit bloc) => bloc.getWeatherByCurrentLocation(),
+    verify: (CurrentWeatherCubit bloc) {
+      stateExpectation(bloc);
+    },
+    errors: [],
+  );
+
+  blocTest(
+    'Search by Cityname Weather Bloc test passed',
+    build: () => SearchWeatherCubit(weatherRepository),
+    act: (SearchWeatherCubit bloc) => bloc.getWeatherByCityName("Coimbatore"),
+    verify: (SearchWeatherCubit bloc) {
+      stateExpectation(bloc);
+    },
+    errors: [],
+  );
+}
+
+void stateExpectation(bloc) {
+  expect(bloc.state.forecastWeatherStatus == BlocStatus.Success, true);
+  expect(bloc.state.currentWeatherStatus == BlocStatus.Success, true);
+
+  expect(bloc.state.weather.city, isNotNull);
+  expect(bloc.state.weather.condition, isNotNull);
+  expect(bloc.state.weather.latitude, isNotNull);
+  expect(bloc.state.weather.longitude, isNotNull);
+  expect(bloc.state.weather.temperature, isNotNull);
+  expect(bloc.state.weather.time, isNotNull);
+  expect(bloc.state.weather.weatherLevel, isNotNull);
+
+  final int dataLength = bloc.state.forecast.temperature.length;
+  final bool isDataLengthEqual =
+      ((bloc.state.forecast.condition.length == dataLength) &&
+          (bloc.state.forecast.weatherLevel.length == dataLength) &&
+          (bloc.state.forecast.time.length == dataLength));
+  expect(isDataLengthEqual, true);
+}

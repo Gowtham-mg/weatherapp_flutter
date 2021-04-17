@@ -19,7 +19,7 @@ class WeatherOffline {
 
   Future<AppResponse<ForecastWeather>> getForecastWeatherByLocation(
       LocationData position) async {
-    debugPrint('POSITION getting forecast weather from offline');
+    // debugPrint('POSITION getting forecast weather from offline');
     AppResponse<ForecastWeather> forecastWeatherResponse =
         await weatherDB.getForecastWeatherByLocation(position);
     return decodeForecastWeatherResponse(forecastWeatherResponse);
@@ -54,7 +54,7 @@ class WeatherOffline {
 
   Future<AppResponse<CurrentWeather>> getCurrentWeatherByLocation(
       LocationData position) async {
-    debugPrint('POSITION getting current weather from offline');
+    // debugPrint('POSITION getting current weather from offline');
     AppResponse<CurrentWeather> currentWeatherResp =
         await weatherDB.getCurrentWeatherByLocation(position);
     return decodeCurrentWeatherFromCurrentWeatherResponse(
